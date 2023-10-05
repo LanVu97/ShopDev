@@ -2,6 +2,7 @@ package com.example.shopDev.Security;
 import ch.qos.logback.core.encoder.EchoEncoder;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
@@ -18,16 +19,15 @@ import java.util.*;
 
 public class JsonWebToken {
 
-    public static String generateToken(RSAPrivateKey privateKey, Shops shop, Long time) {
+    public static String generateToken(RSAPrivateKey privateKey, Map<String, String> payload, Long time) {
         String token = null;
         try {
             Algorithm algorithm = Algorithm.RSA512(null, privateKey);
 
             token = JWT.create()
-                    .withIssuer("Lan")
+                    .withIssuer("auth0")
                     .withSubject("Token Details")
-                    .withClaim("userId", shop.getId())
-                    .withClaim("email", shop.getEmail())
+                    .withPayload(payload)
                     .withIssuedAt(new Date())
                     .withExpiresAt(new Date(System.currentTimeMillis() + time))
                     .withJWTId(UUID.randomUUID()
@@ -42,37 +42,37 @@ public class JsonWebToken {
 
     // verify and get claims using public key
 
-    private static Claim verifyToken(String token, RSAPublicKey publicKey) {
-        Claim claims;
+    private static Map<String, Claim> verifyToken(String token, RSAPublicKey publicKey) {
+
         try {
 
             Algorithm algorithm = Algorithm.RSA512(publicKey, null);
             JWTVerifier verifier = JWT.require(algorithm)
-                    .withIssuer("Lan")
+                    .withIssuer("auth0")
                     .build();
 
                 DecodedJWT decodedJWT = verifier.verify(token);
-            claims = decodedJWT.getClaim("userId");
+            return decodedJWT.getClaims();
 
-        } catch (Exception e) {
-            System.out.println("claim error:" + e);
-            claims = null;
+        } catch (JWTVerificationException exception) {
+            System.out.println("claim error:" + exception);
+
         }
-        return claims;
+        return null;
     }
 
 // create token pair
-    public static Map<String, String> createTokenPair(Shops shop, RSAPublicKey publicKey, RSAPrivateKey privateKey){
+    public static Map<String, String> createTokenPair(Map<String, String> payload, RSAPublicKey publicKey, RSAPrivateKey privateKey){
         try{
             // accessToken
-            String accessToken = generateToken(privateKey, shop, 5000L);
+            String accessToken = generateToken(privateKey, payload, 5000L);
 
             // refreshToken
-            String refreshToken = generateToken(privateKey, shop, 8000L);
+            String refreshToken = generateToken(privateKey, payload, 8000L);
 
-            // verify
-            String claim = verifyToken(accessToken, publicKey).asString();
-            System.out.println("claim " + claim);
+//            // verify
+//            String claim = verifyToken(accessToken, publicKey).asString();
+//            System.out.println("claim " + claim);
             Map<String, String> map = new HashMap<>();
             map.put("accessToken", accessToken);
             map.put("refreshToken", refreshToken);
@@ -84,14 +84,9 @@ public class JsonWebToken {
 }
 
 // convert String to Object
-    public static RSAPublicKey getPublicKeyFromString(String key) throws
-            InvalidKeySpecException, NoSuchAlgorithmException {
+    public static RSAPublicKey getPublicKeyFromString(String key) throws NoSuchAlgorithmException, InvalidKeySpecException {
 
         String publicKeyPEM = key;
-
-        /**replace headers and footers of cert, if RSA PUBLIC KEY in your case, change accordingly*/
-//        publicKeyPEM = publicKeyPEM.replace("-----BEGIN PUBLIC KEY-----\n", "");
-//        publicKeyPEM = publicKeyPEM.replace("-----END PUBLIC KEY-----", "");
 
         byte[] encoded = Base64.getDecoder().decode(publicKeyPEM);
         KeyFactory kf = KeyFactory.getInstance("RSA");
@@ -99,10 +94,6 @@ public class JsonWebToken {
 
         return pubKey;
 
-//        String publicK = “<PUBLIC_KEY_STRING>”;
-//        byte[] publicBytes = Base64.getDecoder().decode(publicK);
-//        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicBytes);
-//        KeyFactory keyFactory = KeyFactory.getInstance(“RSA”);
-//        pubKey = keyFactory.generatePublic(keySpec);
+
     }
 }

@@ -22,7 +22,7 @@ public class KeyTokenService {
     @Autowired
     KeyTokenRepository keyTokenRepository;
 
-    public String createKeyToken(Shops shop, RSAPublicKey publicKey) throws NoSuchAlgorithmException {
+    public String createKeyToken(Shops shop, RSAPublicKey publicKey) {
 
         String pubkey = Base64.getEncoder().encodeToString(publicKey.getEncoded());
 //        KeyToken keyToken = new KeyToken(shop.getId(), pubkey);
