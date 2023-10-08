@@ -6,6 +6,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
+import com.example.shopDev.Models.KeyToken;
 import com.example.shopDev.Models.Shops;
 
 import java.security.KeyFactory;
@@ -42,33 +43,41 @@ public class JsonWebToken {
 
     // verify and get claims using public key
 
-    private static Map<String, Claim> verifyToken(String token, RSAPublicKey publicKey) {
+    public static Shops verifyToken(String token, String publicKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
 
-        try {
+//        try {
+            RSAPublicKey rsaPublicKey = PairKey.getPublicKeyFromString(publicKey);
 
-            Algorithm algorithm = Algorithm.RSA512(publicKey, null);
+            Algorithm algorithm = Algorithm.RSA512(rsaPublicKey, null);
             JWTVerifier verifier = JWT.require(algorithm)
                     .withIssuer("auth0")
                     .build();
 
                 DecodedJWT decodedJWT = verifier.verify(token);
-            return decodedJWT.getClaims();
+        Map<String, Claim> map =  decodedJWT.getClaims();
 
-        } catch (JWTVerificationException exception) {
-            System.out.println("claim error:" + exception);
+        return Shops.builder()
+                .id(map.get("shopId").asString())
+                .email(map.get("email").asString())
+                .build();
 
-        }
-        return null;
+
+//        } catch (JWTVerificationException exception) {
+//            System.out.println("claim error:" + exception);
+//
+//        }
+//        return null;
     }
 
 // create token pair
-    public static Map<String, String> createTokenPair(Map<String, String> payload, RSAPublicKey publicKey, RSAPrivateKey privateKey){
-        try{
+    public static Map<String, String> createTokenPair(Map<String, String> payload, String privateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+//        try{
+            RSAPrivateKey rsaPrivateKey = PairKey.getPrivateKeyFromString(privateKey);
             // accessToken
-            String accessToken = generateToken(privateKey, payload, 5000L);
+            String accessToken = generateToken(rsaPrivateKey, payload, 5000L);
 
             // refreshToken
-            String refreshToken = generateToken(privateKey, payload, 8000L);
+            String refreshToken = generateToken(rsaPrivateKey, payload, 80000000L);
 
 //            // verify
 //            String claim = verifyToken(accessToken, publicKey).asString();
@@ -77,23 +86,14 @@ public class JsonWebToken {
             map.put("accessToken", accessToken);
             map.put("refreshToken", refreshToken);
             return map;
-        }catch(Exception ex){
-            System.out.println("exception error" + ex);
-            throw ex;
-        }
+//        }catch(Exception ex){
+//            System.out.println("exception error" + ex);
+//            throw new ex;
+//        }
 }
 
-// convert String to Object
-    public static RSAPublicKey getPublicKeyFromString(String key) throws NoSuchAlgorithmException, InvalidKeySpecException {
-
-        String publicKeyPEM = key;
-
-        byte[] encoded = Base64.getDecoder().decode(publicKeyPEM);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        RSAPublicKey pubKey = (RSAPublicKey) kf.generatePublic(new X509EncodedKeySpec(encoded));
-
-        return pubKey;
 
 
-    }
+
+
 }

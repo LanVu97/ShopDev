@@ -2,6 +2,7 @@ package com.example.shopDev.Controllers;
 
 import com.example.shopDev.Config.RoleShop;
 import com.example.shopDev.Config.StatusShop;
+import com.example.shopDev.DTO.LoginDto;
 import com.example.shopDev.DTO.ShopDto;
 import com.example.shopDev.DTO.SignUpDto;
 import com.example.shopDev.DTO.SuccessResponse;
@@ -33,7 +34,45 @@ public class AccessController {
         // convert DTO to entity
         Shops shopEntity = modelMapper.map(shopDto, Shops.class);
 
-        Map<String, Object> map = accessService.SignUp(shopEntity);
+        Shops shop = accessService.SignUp(shopEntity);
+
+
+        // convert entity to DTO
+        ShopDto shopResponse = modelMapper.map(shop, ShopDto.class);
+
+
+        return  SuccessResponse.builder()
+                .code(201)
+                .message("Register success")
+                .metadata(shopResponse)
+                .build();
+    }
+    @PostMapping("/login")
+    @Transactional
+    public SuccessResponse Login(@RequestBody LoginDto shopDto) throws NoSuchAlgorithmException, InvalidKeySpecException {
+
+        // convert DTO to entity
+        Shops shopEntity = modelMapper.map(shopDto, Shops.class);
+
+        Map<String, Object> map = accessService.Login(shopEntity);
+        Shops shop = (Shops) map.get("shop");
+
+        // convert entity to DTO
+        ShopDto shopResponse = modelMapper.map(shop, ShopDto.class);
+
+        map.replace("shop", shopResponse);
+        return  SuccessResponse.builder()
+                .code(200)
+                .message("Login success")
+                .metadata(map)
+                .build();
+    }
+
+    @PostMapping("/refreshToken")
+    @Transactional
+    public SuccessResponse HandleRefreshToken(@RequestBody Map<String, String> refreshToken) throws NoSuchAlgorithmException, InvalidKeySpecException {
+
+        Map<String, Object> map = accessService.HandleRefreshToken(refreshToken.get("refreshToken"));
         Shops shop = (Shops) map.get("shop");
 
         // convert entity to DTO
@@ -41,12 +80,10 @@ public class AccessController {
 
         map.replace("shop", shopResponse);
 
-        SuccessResponse s =  SuccessResponse.builder()
-                .code(201)
-                .message("Register success")
+        return  SuccessResponse.builder()
+                .code(200)
+                .message("Login success")
                 .metadata(map)
                 .build();
-
-        return s;
     }
 }
