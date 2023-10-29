@@ -7,6 +7,6 @@ public class AuthFailError  extends BaseError {
 
 
     public AuthFailError(String message) {
-        super(401, message);
+        super(401, message, "error");
     }
 }

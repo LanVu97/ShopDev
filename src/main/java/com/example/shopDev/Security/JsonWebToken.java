@@ -1,5 +1,4 @@
 package com.example.shopDev.Security;
-import ch.qos.logback.core.encoder.EchoEncoder;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
@@ -8,19 +7,21 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
 import com.example.shopDev.Models.KeyToken;
 import com.example.shopDev.Models.Shops;
-
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
+import com.example.shopDev.Repositories.KeyTokenRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
 
+@Component
 public class JsonWebToken {
 
-    public static String generateToken(RSAPrivateKey privateKey, Map<String, String> payload, Long time) {
+    @Autowired
+    KeyTokenRepository keyTokenRepository;
+
+    public String generateToken(RSAPrivateKey privateKey, Map<String, String> payload, Long time) {
         String token = null;
         try {
             Algorithm algorithm = Algorithm.RSA512(null, privateKey);
@@ -41,11 +42,29 @@ public class JsonWebToken {
         return token;
     }
 
+
+// create token pair
+    public  Map<String, String> createTokenPair(Map<String, String> payload, String privateKey){
+
+            RSAPrivateKey rsaPrivateKey = PairKey.getPrivateKeyFromString(privateKey);
+            // accessToken
+            String accessToken = generateToken(rsaPrivateKey, payload, 500000L);
+
+            // refreshToken
+            String refreshToken = generateToken(rsaPrivateKey, payload, 80000000L);
+
+            Map<String, String> map = new HashMap<>();
+            map.put("accessToken", accessToken);
+            map.put("refreshToken", refreshToken);
+            return map;
+}
+
     // verify and get claims using public key
 
-    public static Shops verifyToken(String token, String publicKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public Shops verifyToken(String token, String publicKey){
 
-//        try {
+        try {
+
             RSAPublicKey rsaPublicKey = PairKey.getPublicKeyFromString(publicKey);
 
             Algorithm algorithm = Algorithm.RSA512(rsaPublicKey, null);
@@ -53,47 +72,20 @@ public class JsonWebToken {
                     .withIssuer("auth0")
                     .build();
 
-                DecodedJWT decodedJWT = verifier.verify(token);
-        Map<String, Claim> map =  decodedJWT.getClaims();
+            DecodedJWT decodedJWT = verifier.verify(token);
+            System.out.println("2222222222222222" + decodedJWT);
+            Map<String, Claim> map =  decodedJWT.getClaims();
 
-        return Shops.builder()
-                .id(map.get("shopId").asString())
-                .email(map.get("email").asString())
-                .build();
+            return Shops.builder()
+                    .id(map.get("shopId").asString())
+                    .email(map.get("email").asString())
+                    .build();
 
+        } catch (JWTVerificationException exception) {
+            System.out.println("claim error:" + exception);
+            throw new RuntimeException(exception);
 
-//        } catch (JWTVerificationException exception) {
-//            System.out.println("claim error:" + exception);
-//
-//        }
-//        return null;
+        }
     }
-
-// create token pair
-    public static Map<String, String> createTokenPair(Map<String, String> payload, String privateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
-//        try{
-            RSAPrivateKey rsaPrivateKey = PairKey.getPrivateKeyFromString(privateKey);
-            // accessToken
-            String accessToken = generateToken(rsaPrivateKey, payload, 5000L);
-
-            // refreshToken
-            String refreshToken = generateToken(rsaPrivateKey, payload, 80000000L);
-
-//            // verify
-//            String claim = verifyToken(accessToken, publicKey).asString();
-//            System.out.println("claim " + claim);
-            Map<String, String> map = new HashMap<>();
-            map.put("accessToken", accessToken);
-            map.put("refreshToken", refreshToken);
-            return map;
-//        }catch(Exception ex){
-//            System.out.println("exception error" + ex);
-//            throw new ex;
-//        }
-}
-
-
-
-
 
 }

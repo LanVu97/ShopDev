@@ -1,5 +1,6 @@
 package com.example.shopDev.Security;
 
+import jdk.jshell.spi.ExecutionControl;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -21,47 +22,55 @@ public class PairKey {
     private String publicKey;
     private String privateKey;
 
-    public static PairKey createPairKey() throws NoSuchAlgorithmException {
-        String algorithm = "RSA";
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(algorithm);
+    public static PairKey createPairKey() {
 
-        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+        try{
+            String algorithm = "RSA";
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(algorithm);
 
-        RSAPublicKey rsaPublicKey = (RSAPublicKey) keyPair.getPublic();
-        RSAPrivateKey rsaprivateKey = (RSAPrivateKey) keyPair.getPrivate();
+            KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
-        String publicKey = Base64.getEncoder().encodeToString(rsaPublicKey.getEncoded());
-        String privateKey = Base64.getEncoder().encodeToString(rsaprivateKey.getEncoded());
+            RSAPublicKey rsaPublicKey = (RSAPublicKey) keyPair.getPublic();
+            RSAPrivateKey rsaprivateKey = (RSAPrivateKey) keyPair.getPrivate();
 
-       return new PairKey(publicKey, privateKey);
-    }
+            String publicKey = Base64.getEncoder().encodeToString(rsaPublicKey.getEncoded());
+            String privateKey = Base64.getEncoder().encodeToString(rsaprivateKey.getEncoded());
 
-    // convert String to Object
-    public static RSAPublicKey getPublicKeyFromString(String key) throws NoSuchAlgorithmException, InvalidKeySpecException {
+            return new PairKey(publicKey, privateKey);
 
-
-        byte[] encoded = Base64.getDecoder().decode(key);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        RSAPublicKey pubKey = (RSAPublicKey) kf.generatePublic(new X509EncodedKeySpec(encoded));
-
-        return pubKey;
-
+        }catch (NoSuchAlgorithmException e){
+            throw new RuntimeException(e);
+        }
 
     }
 
     // convert String to Object
-    public static RSAPrivateKey getPrivateKeyFromString(String key) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public static RSAPublicKey getPublicKeyFromString(String key) {
 
+        try{
+            byte[] encoded = Base64.getDecoder().decode(key);
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            RSAPublicKey pubKey = (RSAPublicKey) kf.generatePublic(new X509EncodedKeySpec(encoded));
+            return pubKey;
 
-//        byte[] encoded = Base64.getDecoder().decode(key);
-//        KeyFactory kf = KeyFactory.getInstance("RSA");
-//        return (RSAPrivateKey) kf.generatePublic(new X509EncodedKeySpec(encoded));
+        }catch (NoSuchAlgorithmException | InvalidKeySpecException e){
+            throw new RuntimeException(e);
+        }
 
-        byte[] privateBytes = Base64.getDecoder().decode(key);
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateBytes);
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        return  (RSAPrivateKey) keyFactory.generatePrivate(keySpec);
+    }
 
+    // convert String to Object
+    public static RSAPrivateKey getPrivateKeyFromString(String key){
+
+        try{
+            byte[] privateBytes = Base64.getDecoder().decode(key);
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateBytes);
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            return  (RSAPrivateKey) keyFactory.generatePrivate(keySpec);
+
+        }catch (NoSuchAlgorithmException | InvalidKeySpecException e){
+            throw new RuntimeException(e);
+        }
 
     }
 }

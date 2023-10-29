@@ -12,4 +12,5 @@ public interface ShopRepository extends MongoRepository<Shops, String> {
     boolean existsByEmail(String email);
 
     Shops findByEmail(String email);
+
 }

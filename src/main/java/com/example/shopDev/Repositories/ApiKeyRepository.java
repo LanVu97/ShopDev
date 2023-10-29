@@ -12,5 +12,4 @@ public interface ApiKeyRepository extends MongoRepository<ApiKey, String> {
 
     ApiKey findByKeyAndStatus(String key, boolean b);
 
-//    boolean exists(ApiKey example);
 }

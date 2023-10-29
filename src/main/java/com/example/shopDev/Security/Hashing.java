@@ -1,31 +1,45 @@
 package com.example.shopDev.Security;
 
+import org.springframework.stereotype.Component;
+
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
+import java.sql.SQLOutput;
 
+@Component
 public class Hashing {
 
-    public static String generatePasswordHash(String password) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        //get salt
-        SecureRandom random = new SecureRandom();
-        byte[] salt = new byte[16];
-        random.nextBytes(salt);
+    public  String generatePasswordHash(String password)  {
 
+        try{
+            //get salt
+            SecureRandom random = new SecureRandom();
+            byte[] salt = new byte[16];
+            random.nextBytes(salt);
 
-        int iterations = 65536;
-        PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, iterations, 128);
-        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            int iterations = 65536;
+            PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, iterations, 128);
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
 
-        byte[] hash = factory.generateSecret(spec).getEncoded();
+            byte[] hash = factory.generateSecret(spec).getEncoded();
+            String test = new String(hash);
+            System.out.println("ggggggggggg:" + test);
+            System.out.println("hhhhhhh" + toHex(hash));
+            return iterations + ":" + toHex(salt) + ":" + toHex(hash);
 
-        return iterations + ":" + toHex(salt) + ":" + toHex(hash);
+        }catch (NoSuchAlgorithmException e){
+            throw new RuntimeException(e);
+        }catch (InvalidKeySpecException e){
+            throw new RuntimeException(e);
+
+        }
     }
 
-    private static String toHex(byte[] array)
+    private  String toHex(byte[] array)
     {
         BigInteger bi = new BigInteger(1, array);
         String hex = bi.toString(16);
@@ -39,28 +53,37 @@ public class Hashing {
         }
     }
 
-    public static boolean validatePassword(String originalPassword, String storedPassword)
-            throws NoSuchAlgorithmException, InvalidKeySpecException
+    public  boolean validatePassword(String originalPassword, String storedPassword)
+
     {
-        String[] parts = storedPassword.split(":");
-        int iterations = Integer.parseInt(parts[0]);
+        try{
+            String[] parts = storedPassword.split(":");
+            int iterations = Integer.parseInt(parts[0]);
 
-        byte[] salt = fromHex(parts[1]);
-        byte[] hash = fromHex(parts[2]);
+            byte[] salt = fromHex(parts[1]);
+            byte[] hash = fromHex(parts[2]);
 
-        PBEKeySpec spec = new PBEKeySpec(originalPassword.toCharArray(),
-                salt, iterations, hash.length * 8);
-        SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-        byte[] testHash = skf.generateSecret(spec).getEncoded();
+            PBEKeySpec spec = new PBEKeySpec(originalPassword.toCharArray(),
+                    salt, iterations, hash.length * 8);
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            byte[] testHash = skf.generateSecret(spec).getEncoded();
 
-        int diff = hash.length ^ testHash.length;
-        for(int i = 0; i < hash.length && i < testHash.length; i++)
-        {
-            diff |= hash[i] ^ testHash[i];
+            int diff = hash.length ^ testHash.length;
+            for(int i = 0; i < hash.length && i < testHash.length; i++)
+            {
+                diff |= hash[i] ^ testHash[i];
+            }
+            return diff == 0;
+
+        }catch (NoSuchAlgorithmException e){
+            throw new RuntimeException(e);
+        }catch (InvalidKeySpecException e){
+            throw new RuntimeException(e);
+
         }
-        return diff == 0;
+
     }
-    private static byte[] fromHex(String hex) throws NoSuchAlgorithmException
+    private  byte[] fromHex(String hex)
     {
         byte[] bytes = new byte[hex.length() / 2];
         for(int i = 0; i < bytes.length ;i++)
@@ -69,6 +92,5 @@ public class Hashing {
         }
         return bytes;
     }
-
 
 }
