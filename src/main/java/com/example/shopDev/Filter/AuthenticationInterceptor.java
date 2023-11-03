@@ -33,25 +33,31 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
-            throws Exception {
-        logger.info("preHandle Authentication Filter");
-//
+           {
+
+        try{
+            logger.info("preHandle Authentication Filter");
             String accessTokenHeader = request.getHeader(HeaderContent.AUTHORIZATION);
             if(accessTokenHeader == null) {
                 throw new AuthFailError("Invalid Request");
             }
             // get ShopId from token
-        DecodedJWT decodedJWT_1 = JWT.decode(accessTokenHeader);
-        String shopId = decodedJWT_1.getClaims().get("shopId").asString();
-        logger.info("shopId:" + shopId);
+            DecodedJWT decodedJWT_1 = JWT.decode(accessTokenHeader);
+            String shopId = decodedJWT_1.getClaims().get("shopId").asString();
+            logger.info("shopId:" + shopId);
 
-        KeyToken keyToken = keyTokenRepository.findByShopId(shopId);
-        String publicKey = keyToken.getPublicKey();
-//
-        Shops decodeShop = jsonWebToken.verifyToken(accessTokenHeader, publicKey);
+            KeyToken keyToken = keyTokenRepository.findByShopId(shopId);
+            String publicKey = keyToken.getPublicKey();
+
+            Shops decodeShop = jsonWebToken.verifyToken(accessTokenHeader, publicKey);
             //gan keyStore cho request
-        request.setAttribute("shop", decodeShop.getId());
-        return true;
+            request.setAttribute("shop", decodeShop.getId());
+            return true;
+
+        }catch (Exception ex){
+            throw new AuthFailError("Auth Error:" + ex);
+        }
+
     }
 
     @Override
