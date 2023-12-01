@@ -36,7 +36,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({ForbidenError.class})
-    public ResponseEntity<Object> handleAPIKeyRequestError(ForbidenError exception) {
+    public ResponseEntity<Object> handleForbidenError(ForbidenError exception) {
         ErrorObject errorEntity = ErrorObject.builder()
                 .code(exception.getCode())
                 .status(exception.getStatus())
@@ -47,6 +47,9 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.FORBIDDEN)
                 .body(errorEntity);
     }
+
+
+
 
     @ExceptionHandler({AuthFailError.class})
     public ResponseEntity<Object> handleAPIKeyRequestError(AuthFailError exception) {
@@ -63,6 +66,19 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({BadRequestError.class})
     public ResponseEntity<Object> handleBadRequestError(BadRequestError exception) {
+        ErrorObject errorEntity = ErrorObject.builder()
+                .code(exception.getCode())
+                .status(exception.getStatus())
+                .message(exception.getMessage())
+                .build();
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(errorEntity);
+    }
+
+    @ExceptionHandler({CreationException.class})
+    public ResponseEntity<Object> handleCreationException(CreationException exception) {
         ErrorObject errorEntity = ErrorObject.builder()
                 .code(exception.getCode())
                 .status(exception.getStatus())

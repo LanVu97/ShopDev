@@ -13,11 +13,13 @@ import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
+import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 
 @SpringBootApplication
+@EnableMongoAuditing
 public class ShopDevApplication {
 
 	@Bean

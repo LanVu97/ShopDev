@@ -25,7 +25,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
         registry.addInterceptor(authenticationInterceptor)
 //                .addPathPatterns("/v1/api/shop/")
-                .excludePathPatterns("/v1/api/shop/login", "/v1/api/shop/signup");
+                .excludePathPatterns("/v1/api/shop/login",
+                        "/v1/api/shop/signup",
+                        "/v1/api/product/all",
+//                        "/v1/api/product/*",
+                        "/v1/api/product/search/*");
     }
 
 

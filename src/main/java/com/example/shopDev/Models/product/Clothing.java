@@ -16,4 +16,5 @@ public class Clothing{
     private String material;
     private String shopId;
 
+
 }
